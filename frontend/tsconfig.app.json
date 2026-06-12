@@ -15,11 +15,16 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Path alias — keep in sync with vite.config.ts */
+    "paths": {
+      "@/*": ["./*"]
+    },
+
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src", "components", "pages", "types"]
 }
