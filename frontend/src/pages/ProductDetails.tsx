@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import type { Product } from "@/src/types/Product";
 import { useEffect, useState } from "react";
+import { useCart } from "../context/CartContext";
 
 function ProductDetails() {
   const { id } = useParams();
@@ -8,6 +9,7 @@ function ProductDetails() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     console.log("Fetching product with id:", id);
@@ -155,7 +157,7 @@ function ProductDetails() {
               ← Back to Products
             </Link>
             <button
-              onClick={() => alert("Added to cart (demo)")}
+              onClick={() => addToCart(product)}
               className="flex-1 px-4 py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition shadow-md"
             >
               Add to Cart 🛒
