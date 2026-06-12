@@ -1,9 +1,11 @@
-import type { Product } from '@/types/Product';
+import type { Product } from '@/src/types/Product';
+import { Link } from 'react-router-dom';
 
 function ProductCard({ product }: { product: Product }) {
     const BASE_URL = import.meta.env.VITE_DJANGO_BASE_URL || 'http://localhost:8000';
 
     return (
+        <Link to={`/products/${product.id}`} className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-xl">
         <div className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-xl">
             <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
                 <img
@@ -39,6 +41,7 @@ function ProductCard({ product }: { product: Product }) {
                 </div>
             </div>
         </div>
+        </Link>
     );
 }
 
