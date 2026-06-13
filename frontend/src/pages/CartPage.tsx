@@ -1,8 +1,9 @@
 import { useCart } from "../context/CartContext";
+import { Link } from "react-router-dom";
 
 const BASEURL = import.meta.env.VITE_DJANGO_BASE_URL || "http://localhost:8000";
 
-// Build a usable image URL from the relative path Django returns (e.g. /media/...).
+
 const getImageUrl = (path?: string) => {
     if (!path) return "https://placehold.co/100x100?text=No+Image";
     if (path.startsWith("http")) return path;
@@ -69,6 +70,9 @@ function CartPage() {
                         <div className="border-t-2 border-gray-300 mt-2 pt-6 flex justify-between items-center">
                             <span className="text-xl font-bold">Total:</span>
                             <span className="text-2xl font-bold">${total.toFixed(2)}</span>
+                            <Link to="/checkout" className="ml-6 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                               Checkout
+                            </Link>
                         </div>
                     </>
                 )}

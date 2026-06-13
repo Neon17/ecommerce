@@ -139,16 +139,9 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     if (item && item.quantity > 1) updateQuantity(productId, item.quantity - 1)
   }
 
-  // No bulk-clear endpoint on the backend, so remove each item then refresh.
   const clearCart = async () => {
-    try {
-      await Promise.all(
-        cartItems.map((item) => post('remove/', { product_id: item.productId })),
-      )
-      fetchCart()
-    } catch (error) {
-      console.error('Error clearing cart:', error)
-    }
+    setCartItems([])
+    setTotal(0)
   }
 
   return (
