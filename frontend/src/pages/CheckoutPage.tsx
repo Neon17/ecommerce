@@ -2,14 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/src/context/CartContext';
 
+const BASEURL = import.meta.env.VITE_DJANGO_BASE_URL || 'http://localhost:8000';
+
 function CheckoutPage() {
-    var BASEURL = import.meta.env.VITE_BASEURL;
-    if (!BASEURL) {
-        BASEURL = 'http://localhost:8000';
-    }
     const navigate = useNavigate();
     const { cartItems, clearCart } = useCart();
-    const [isProcessing, setIsProcessing] = useState(false);
 
     const [form, setForm] = useState({
         name: "",
@@ -31,9 +28,14 @@ function CheckoutPage() {
         setMessage(null);
 
         try {
+            const token = localStorage.getItem("jwtToken");
             const response = await fetch(`${BASEURL}/api/orders/create/`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                credentials: 'include',
                 body: JSON.stringify({
                     ...form,
                     items: cartItems.map(item => ({
@@ -45,7 +47,6 @@ function CheckoutPage() {
 
             if (response.ok) {
                 setMessage('Order placed successfully!');
-                fetch(`${BASEURL}/api/cart/clear/`, { method: 'POST' });
                 clearCart();
                 setTimeout(() => navigate('/'), 2000);
             } else {

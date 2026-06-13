@@ -1,45 +1,11 @@
 from django.http import HttpRequest
-from django.shortcuts import get_object_or_404
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from .cart_utils import get_or_create_cart, set_cart_session_cookie
-from .models import Product, Category, Cart, CartItem, Order, OrderItem
-from .serializers import ProductSerializer, CategorySerializer, CartSerializer, OrderSerializer
-from .serializers import RegisterSerializer, UserSerializer
-from rest_framework import status
-from rest_framework.decorators import permission_classes
-@api_view(['GET'])
-def get_products(request: HttpRequest):
-    products = Product.objects.select_related('category').all()
-    serializer = ProductSerializer(products, many=True)
-    return Response(serializer.data)
+from rest_framework.decorators import api_view, permission_classes
+from ..cart_utils import get_or_create_cart, set_cart_session_cookie
+from ..models import Product, Cart, CartItem
+from ..serializers import CartSerializer
 
-@api_view(['GET'])
-def get_categories(request: HttpRequest):
-    categories = Category.objects.all()
-    serializer = CategorySerializer(categories, many=True)
-    return Response(serializer.data)
-
-@api_view(['GET'])
-def get_product(request: HttpRequest, pk):
-    try:
-        product = Product.objects.select_related('category').get(pk=pk)
-    except Product.DoesNotExist:
-        return Response({'error': 'Product not found'}, status=404)
-    
-    serializer = ProductSerializer(product)
-    return Response(serializer.data)
-
-@api_view(['GET'])
-def get_category(request: HttpRequest, pk):
-    try:
-        category = Category.objects.get(pk=pk)
-    except Category.DoesNotExist:
-        return Response({'error': 'Category not found'}, status=404)
-    
-    serializer = CategorySerializer(category)
-    return Response(serializer.data)
 
 @api_view(['GET'])
 def get_cart(request: HttpRequest):
@@ -129,77 +95,6 @@ def remove_from_cart(request: HttpRequest):
         set_cart_session_cookie(response, new_session_id)
     return response
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_orders(request: HttpRequest):
-    orders = Order.objects.filter(user=request.user).all()
-    orders_cleaned = OrderSerializer(orders, many=True)
-    return Response(orders_cleaned.data)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_order(request: HttpRequest, pk):
-    order = get_object_or_404(Order, pk=pk)
-    order_cleaned = OrderSerializer(order)
-    return Response(order_cleaned.data)
-
-@api_view(['PUT', 'PATCH'])
-@permission_classes([IsAuthenticated])
-def update_order(request: HttpRequest, pk):
-    order = get_object_or_404(Order, pk=pk)
-
-    is_partial = (request.method == 'PATCH')
-    serializer = OrderSerializer(order, data=request.data, partial=is_partial)
-    serializer.is_valid(raise_exception=True)
-    updated_order = serializer.save()
-
-    return Response({
-        'message': 'Order updated successfully',
-        'order_id': updated_order.id,
-    })
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def create_order(request: HttpRequest):
-    try:
-        data = request.data
-        name = data.get('name')
-        address = data.get('address')
-        phone = data.get('phone')
-        payment_method = data.get('payment_method', 'COD')
-
-        cart = Cart.objects.filter(user=request.user).first()
-        if not cart or not cart.items.exists():
-            return Response({'error': 'Cart not found'}, status=404)
-
-        total = sum(float(items.product.price) * items.quantity for items in cart.items.all())
-        order = Order.objects.create(
-            user=request.user,
-            name=name,
-            phone=phone,
-            address=address,
-            payment_method=payment_method,
-            total_price = total,
-        )
-
-        for item in cart.items.all():
-            OrderItem.objects.create(
-                order = order,
-                product = item.product,
-                quantity = item.quantity,
-                price = item.product.price,
-            )
-
-        cart.delete()
-
-        return Response({
-            'message': 'Order created successfully',
-            'order_id': order.id,
-        })
-
-    except Exception as e:
-        return Response({'error': e}, status=400)
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def merge_cart(request):
@@ -251,16 +146,3 @@ def sync_local_cart(request):
         cart_item.save()
 
     return Response({'message': 'Local cart synced'})
-
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def register_view(request):
-    serializer = RegisterSerializer(data=request.data)
-    if serializer.is_valid():
-        user = serializer.save()
-        return Response({"message": "User created successfully", "user": UserSerializer(user).data}, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-

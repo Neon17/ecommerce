@@ -11,6 +11,7 @@ type CartContextType = {
     increaseQuantity: (productId: number) => Promise<void>;
     decreaseQuantity: (productId: number) => Promise<void>;
     removeFromCart: (productId: number) => Promise<void>;
+    clearCart: () => void;
     syncAfterLogin: () => Promise<void>;
 }
 
@@ -21,6 +22,7 @@ const CartContext = createContext<CartContextType>({
     increaseQuantity: async () => {},
     decreaseQuantity: async () => {},
     removeFromCart: async () => {},
+    clearCart: () => {},
     syncAfterLogin: async () => {}
 });
 
@@ -169,6 +171,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
     }
 
+    // Order creation deletes the cart server-side, so this just resets local state.
+    const clearCart = () => {
+        setCartItems([])
+        setTotal(0)
+        localStorage.removeItem("cartItems")
+    }
+
     const syncAfterLogin = async () => {
         const token = localStorage.getItem("jwtToken")
         if (!token || cartItems.length === 0) return;
@@ -213,7 +222,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <CartContext.Provider value = {{ cartItems, total, addToCart, increaseQuantity, decreaseQuantity, removeFromCart, syncAfterLogin }}>
+        <CartContext.Provider value = {{ cartItems, total, addToCart, increaseQuantity, decreaseQuantity, removeFromCart, clearCart, syncAfterLogin }}>
             {children}
         </CartContext.Provider>
     )
