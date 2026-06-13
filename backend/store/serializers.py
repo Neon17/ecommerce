@@ -75,3 +75,8 @@ class OrderSerializer(serializers.ModelSerializer):
         if value and len(value) != 10:
             raise serializers.ValidationError("Invalid phone number. Must be exactly 10 digits.")
         return value
+
+    def validate_name(self, value):
+        if value and len(value) <= 0:
+            raise serializers.ValidationError("Invalid name. Must be at least 1 character.")
+        return value
