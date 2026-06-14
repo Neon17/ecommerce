@@ -1,3 +1,4 @@
+import type { Product } from "./Product";
 import type { User } from "./User";
 
 export type Cart = {

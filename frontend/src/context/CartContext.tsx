@@ -1,6 +1,7 @@
 import type { CartItem } from "@/src/types/Cart";
 import type { Product } from "@/src/types/Product";
 import { createContext, useState, useContext, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 
 const BASEURL = import.meta.env.VITE_DJANGO_BASE_URL || "http://localhost:8000"
 
@@ -30,6 +31,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const [cartItems, setCartItems] = useState<CartItem[]>([])
     const [total, setTotal] = useState<number>(0)
     const [isCookieEnabled, setIsCookieEnabled] = useState<boolean>(true)
+    const { user } = useAuth();
 
     const applyServerCart = (cart: any) => {
         const items: CartItem[] = (cart.items || []).map((item: any) => ({
@@ -49,6 +51,35 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setTotal(items.reduce((sum, item) => sum + item.price * item.quantity, 0))
         localStorage.setItem("cartItems", JSON.stringify(items))
     }
+
+    const fetchServerCart = async () => {
+        try {
+            const response = await fetch(`${BASEURL}/api/cart/`, {
+                method: "GET",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+            });
+            if (response.ok) {
+                const cartData = await response.json();
+                applyServerCart(cartData);
+            } else {
+                console.error("Failed to fetch cart from server");
+            }
+        } catch (error) {
+            console.error("Error fetching cart:", error);
+        }
+    };
+
+    useEffect(() => {
+        if (!user) {
+            console.log("User logged out, clearing cart...")
+            setCartItems([])
+            setTotal(0)
+            localStorage.removeItem("cartItems")
+        } else {
+            fetchServerCart();
+        }
+    }, [user])
 
     useEffect(() => {
         if (!navigator.cookieEnabled) {
@@ -171,7 +202,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
     }
 
-    // Order creation deletes the cart server-side, so this just resets local state.
     const clearCart = () => {
         setCartItems([])
         setTotal(0)

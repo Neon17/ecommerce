@@ -1,4 +1,4 @@
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, logout
 from django.http import HttpRequest
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -61,7 +61,7 @@ def refresh_view(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def logout_view(request):
-    # Stateless JWT: the client drops its tokens. Endpoint kept for symmetry.
+    logout(request)
     return Response({"message": "Logged out"})
 
 
