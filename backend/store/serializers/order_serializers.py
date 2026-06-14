@@ -1,5 +1,12 @@
 from rest_framework import serializers
-from ..models import Order
+from ..models import Order, OrderItem
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'product', 'product_name', 'quantity', 'price']
 
 class OrderSerializer(serializers.ModelSerializer):
     PAYMENT_CHOICES = [
@@ -9,6 +16,7 @@ class OrderSerializer(serializers.ModelSerializer):
     ]
 
     payment_method = serializers.ChoiceField(choices=PAYMENT_CHOICES)
+    items = OrderItemSerializer(many=True, read_only=True)
 
     class Meta:
         model = Order

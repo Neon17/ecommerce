@@ -28,7 +28,7 @@ function CheckoutPage() {
         setMessage(null);
 
         try {
-            const token = localStorage.getItem("jwtToken");
+            const token = localStorage.getItem("token");
             const response = await fetch(`${BASEURL}/api/orders/create/`, {
                 method: 'POST',
                 headers: {

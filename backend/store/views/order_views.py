@@ -36,6 +36,13 @@ def update_order(request: HttpRequest, pk):
         'order_id': updated_order.id,
     })
 
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_order(request: HttpRequest, pk):
+    order = get_object_or_404(Order, pk=pk, user=request.user)
+    order.delete()
+    return Response({'message': 'Order cancelled successfully'})
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_order(request: HttpRequest):

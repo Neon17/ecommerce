@@ -179,7 +179,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
 
     const syncAfterLogin = async () => {
-        const token = localStorage.getItem("jwtToken")
+        const token = localStorage.getItem("token")
         if (!token || cartItems.length === 0) return;
         
         if (isCookieEnabled) {
