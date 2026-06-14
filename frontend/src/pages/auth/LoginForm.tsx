@@ -35,7 +35,8 @@ export default function LoginForm() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4 bg-white rounded shadow">
+        <div className="min-h-[calc(100vh-72px)] flex items-center justify-center bg-gray-100 px-4 py-10">
+        <form onSubmit={handleSubmit} className="w-full max-w-md p-6 bg-white rounded-lg shadow">
             <h2 className="text-2xl font-bold mb-4">Login</h2>
 
             {error && (
@@ -74,6 +75,7 @@ export default function LoginForm() {
                 </Link>
             </p>
         </form>
+        </div>
     );
 }
 

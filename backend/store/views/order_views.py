@@ -24,7 +24,7 @@ def get_order(request: HttpRequest, pk):
 @api_view(['PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def update_order(request: HttpRequest, pk):
-    order = get_object_or_404(Order, pk=pk)
+    order = get_object_or_404(Order, pk=pk, user=request.user)
 
     is_partial = (request.method == 'PATCH')
     serializer = OrderSerializer(order, data=request.data, partial=is_partial)

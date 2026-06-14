@@ -38,7 +38,8 @@ const RegisterForm = () => {
     }
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="max-w-md mx-auto p-4 bg-white rounded shadow">
+        <div className="min-h-[calc(100vh-72px)] flex items-center justify-center bg-gray-100 px-4 py-10">
+        <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-md p-6 bg-white rounded-lg shadow">
             <h2 className="text-2xl font-bold mb-4">Register</h2>
             {error && (
                 <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -95,6 +96,7 @@ const RegisterForm = () => {
                 </Link>
             </p>
         </form>
+        </div>
     )
 
 }

@@ -88,7 +88,7 @@ function ProductDetails() {
           <div className="text-gray-400 text-6xl mb-4">🔍</div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Product Not Found</h2>
           <p className="text-gray-600 mb-6">No product with ID "{id}" exists.</p>
-          <Link to="/products" className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+          <Link to="/" className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
             Browse Products
           </Link>
         </div>

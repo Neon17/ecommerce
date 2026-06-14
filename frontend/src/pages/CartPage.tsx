@@ -22,7 +22,7 @@ function CartPage() {
                 {cartItems.length === 0 ? (
                     <p className="text-center text-gray-600">
                         Your cart is empty.{" "}
-                        <a href="/products" className="text-blue-500 hover:underline">Shop now!</a>
+                        <Link to="/" className="text-blue-500 hover:underline">Shop now!</Link>
                     </p>
                 ) : (
                     <>

@@ -48,7 +48,7 @@ function CheckoutPage() {
             if (response.ok) {
                 setMessage('Order placed successfully!');
                 clearCart();
-                setTimeout(() => navigate('/'), 2000);
+                setTimeout(() => navigate('/orders'), 2000);
             } else {
                 const data = await response.json();
                 setMessage(data.error || 'Failed to place order. Please try again.');

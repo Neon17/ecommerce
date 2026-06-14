@@ -17,7 +17,21 @@ type Order = {
     address: string;
     phone: string;
     payment_method: string;
+    status: string;
+    is_paid: boolean;
     items: OrderItem[];
+};
+
+// Online wallets that need an upfront payment; COD is paid on delivery.
+const ONLINE_METHODS = ['esewa', 'khalti'];
+
+// How each backend status is shown to the customer.
+const STATUS_META: Record<string, { label: string; className: string }> = {
+    pending: { label: 'Pending', className: 'bg-yellow-100 text-yellow-700' },
+    paid: { label: 'Paid', className: 'bg-blue-100 text-blue-700' },
+    confirmed: { label: 'Confirmed', className: 'bg-green-100 text-green-700' },
+    on_road: { label: 'On the way', className: 'bg-indigo-100 text-indigo-700' },
+    delivered: { label: 'Delivered', className: 'bg-gray-200 text-gray-700' },
 };
 
 function OrdersPage() {
@@ -45,6 +59,31 @@ function OrdersPage() {
         };
         fetchOrders();
     }, []);
+
+    // NOTE: this is a placeholder. A real eSewa/Khalti payment must be verified
+    // on the server after the gateway redirect — see the guide at the bottom.
+    const handlePay = async (orderId: number) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${BASEURL}/api/orders/${orderId}/update/`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                credentials: 'include',
+                body: JSON.stringify({ status: 'paid', is_paid: true }),
+            });
+            if (!response.ok) {
+                throw new Error('Payment failed');
+            }
+            setOrders((prev) =>
+                prev.map((o) => (o.id === orderId ? { ...o, status: 'paid', is_paid: true } : o))
+            );
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Something went wrong');
+        }
+    };
 
     const handleCancel = async (orderId: number) => {
         if (!window.confirm('Cancel this order?')) return;
@@ -88,9 +127,18 @@ function OrdersPage() {
                         <div key={order.id} className="bg-white rounded shadow p-4">
                             <div className="flex justify-between items-center mb-2">
                                 <span className="font-semibold">Order #{order.id}</span>
-                                <span className="text-sm text-gray-500">
-                                    {new Date(order.created_at).toLocaleDateString()}
-                                </span>
+                                <div className="flex items-center gap-3">
+                                    <span
+                                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                                            (STATUS_META[order.status] ?? STATUS_META.pending).className
+                                        }`}
+                                    >
+                                        {(STATUS_META[order.status] ?? STATUS_META.pending).label}
+                                    </span>
+                                    <span className="text-sm text-gray-500">
+                                        {new Date(order.created_at).toLocaleDateString()}
+                                    </span>
+                                </div>
                             </div>
                             <ul className="text-sm text-gray-700 mb-2 divide-y">
                                 {order.items.map((item) => (
@@ -104,12 +152,22 @@ function OrdersPage() {
                                 <span className="text-gray-500">{order.payment_method}</span>
                                 <span className="font-bold">Total: ${order.total_price}</span>
                             </div>
-                            <button
-                                onClick={() => handleCancel(order.id)}
-                                className="mt-3 text-sm text-red-600 hover:underline"
-                            >
-                                Cancel order
-                            </button>
+                            <div className="mt-3 flex items-center justify-between">
+                                <button
+                                    onClick={() => handleCancel(order.id)}
+                                    className="text-sm text-red-600 hover:underline"
+                                >
+                                    Cancel order
+                                </button>
+                                {ONLINE_METHODS.includes(order.payment_method) && !order.is_paid && (
+                                    <button
+                                        onClick={() => handlePay(order.id)}
+                                        className="bg-green-600 text-white text-sm px-5 py-1.5 rounded hover:bg-green-700 transition-colors"
+                                    >
+                                        Pay with {order.payment_method}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
