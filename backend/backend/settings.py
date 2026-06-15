@@ -16,6 +16,16 @@ from dotenv import load_dotenv
 load_dotenv()
 from datetime import timedelta
 
+ESEWA_PRODUCT_CODE = os.getenv('ESEWA_PRODUCT_CODE')
+ESEWA_SECRET_KEY = os.getenv('ESEWA_SECRET_KEY')
+ESEWA_SIGNED_FIELD_NAME = os.getenv('ESEWA_SIGNED_FIELD_NAMES')
+PRODUCT_SERVICE_CHARGE = int(os.getenv('PRODUCT_SERVICE_CHARGE', 0))
+PRODUCT_DELIVERY_CHARGE = int(os.getenv('PRODUCT_DELIVERY_CHARGE', 0))
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+
+KHALTI_INITIATE_URL = os.getenv('KHALTI_INITIATE_URL')
+KHALTI_AUTHORIZATION_KEY = os.getenv('KHALTI_AUTHORIZATION_SECRET')
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

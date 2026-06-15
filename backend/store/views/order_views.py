@@ -83,4 +83,4 @@ def create_order(request: HttpRequest):
         })
 
     except Exception as e:
-        return Response({'error': e}, status=400)
+        return Response({'error': str(e)}, status=400)

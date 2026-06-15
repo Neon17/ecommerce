@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.contrib.auth.models import User
 from .product_models import Product
@@ -21,6 +23,10 @@ class Order(models.Model):
     payment_method = models.CharField(max_length=100, default='COD')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     is_paid = models.BooleanField(default=False)
+
+    transaction_uuid = models.UUIDField(unique=True, null=True, blank=True, editable=False)
+    pidx = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    esewa_signature = models.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
         return f'Order {self.id} by {self.user.username}'

@@ -8,6 +8,8 @@ import RequireAuth from "@/src/components/RequireAuth";
 import LoginForm from "@/src/pages/auth/LoginForm";
 import RegisterForm from "@/src/pages/auth/RegisterForm";
 import OrdersPage from "@/src/pages/OrdersPage";
+import EsewaCheckout from "./payments/EsewaCheckout";
+import KhaltiCheckout from "./payments/KhaltiCheckout";
 
 function App() {
     return (
@@ -21,6 +23,8 @@ function App() {
               <Route path="/register" element={<RegisterForm />} />
               <Route path="/orders" element={<RequireAuth><OrdersPage /></RequireAuth>} />
               <Route path="/checkout" element={<RequireAuth><CheckoutPage /></RequireAuth>} />
+              <Route path="/esewa-checkout/:orderId" element={<EsewaCheckout orderId={0} />} />
+              <Route path="/khalti-checkout/:orderId" element={<KhaltiCheckout orderId={0} />} /> {/* Placeholder for KhaltiCheckout */}
           </Routes>
       </Router>
     );

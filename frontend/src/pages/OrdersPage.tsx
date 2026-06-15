@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import EsewaCheckout from '@/src/payments/EsewaCheckout';
+import KhaltiCheckout from '@/src/payments/KhaltiCheckout';
 
 const BASEURL = import.meta.env.VITE_DJANGO_BASE_URL || 'http://localhost:8000';
 
@@ -22,10 +24,8 @@ type Order = {
     items: OrderItem[];
 };
 
-// Online wallets that need an upfront payment; COD is paid on delivery.
-const ONLINE_METHODS = ['esewa', 'khalti'];
+const ONLINE_METHODS = ['Esewa', 'Khalti'];
 
-// How each backend status is shown to the customer.
 const STATUS_META: Record<string, { label: string; className: string }> = {
     pending: { label: 'Pending', className: 'bg-yellow-100 text-yellow-700' },
     paid: { label: 'Paid', className: 'bg-blue-100 text-blue-700' },
@@ -38,52 +38,30 @@ function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-    useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${BASEURL}/api/orders/`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                    credentials: 'include',
-                });
-                if (!response.ok) {
-                    throw new Error('Failed to load orders');
-                }
-                setOrders(await response.json());
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Something went wrong');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchOrders();
-    }, []);
-
-    // NOTE: this is a placeholder. A real eSewa/Khalti payment must be verified
-    // on the server after the gateway redirect — see the guide at the bottom.
-    const handlePay = async (orderId: number) => {
+    const fetchOrders = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${BASEURL}/api/orders/${orderId}/update/`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
+            const response = await fetch(`${BASEURL}/api/orders/`, {
+                headers: { Authorization: `Bearer ${token}` },
                 credentials: 'include',
-                body: JSON.stringify({ status: 'paid', is_paid: true }),
             });
             if (!response.ok) {
-                throw new Error('Payment failed');
+                throw new Error('Failed to load orders');
             }
-            setOrders((prev) =>
-                prev.map((o) => (o.id === orderId ? { ...o, status: 'paid', is_paid: true } : o))
-            );
+            const data = await response.json();
+            setOrders(data);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Something went wrong');
+        } finally {
+            setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchOrders();
+    }, [refetchTrigger]);
 
     const handleCancel = async (orderId: number) => {
         if (!window.confirm('Cancel this order?')) return;
@@ -101,6 +79,10 @@ function OrdersPage() {
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Something went wrong');
         }
+    };
+
+    const onPaymentSuccess = () => {
+        setRefetchTrigger(prev => prev + 1);
     };
 
     if (loading) {
@@ -160,12 +142,22 @@ function OrdersPage() {
                                     Cancel order
                                 </button>
                                 {ONLINE_METHODS.includes(order.payment_method) && !order.is_paid && (
-                                    <button
-                                        onClick={() => handlePay(order.id)}
-                                        className="bg-green-600 text-white text-sm px-5 py-1.5 rounded hover:bg-green-700 transition-colors"
-                                    >
-                                        Pay with {order.payment_method}
-                                    </button>
+                                    <div className="w-36">
+                                        {order.payment_method === 'Esewa' && (
+                                            <EsewaCheckout
+                                                orderId={order.id}
+                                                onSuccess={onPaymentSuccess}
+                                                onError={(msg) => setError(msg)}
+                                            />
+                                        )}
+                                        {order.payment_method === 'Khalti' && (
+                                            <KhaltiCheckout
+                                                orderId={order.id}
+                                                onSuccess={onPaymentSuccess}
+                                                onError={(msg) => setError(msg)}
+                                            />
+                                        )}
+                                    </div>
                                 )}
                             </div>
                         </div>

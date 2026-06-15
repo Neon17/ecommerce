@@ -15,7 +15,6 @@ function RequireAuth({ children }: { children: ReactNode }) {
     }
 
     if (!user) {
-        // Send guests to login and remember where they were headed (e.g. /checkout).
         return <Navigate to="/login" state={{ from: location }} replace />
     }
 

@@ -1,9 +1,9 @@
 from django.urls import path
 from . import views
 from .views import auth_views
+from .views import payment_views
 
 urlpatterns = [
-    # auth (no trailing slash: the frontend calls /api/login, /api/user, etc.)
     path('register', auth_views.register_view, name='register'),
     path('login', auth_views.login_view, name='login'),
     path('logout', auth_views.logout_view, name='logout'),
@@ -30,4 +30,10 @@ urlpatterns = [
     path('orders/<int:pk>/update/', views.update_order, name='update_order'),
     path('orders/<int:pk>/delete/', views.delete_order, name='delete_order'),
     path('orders/create/', views.create_order, name='create_order'),
+
+    path('payment/<int:order_id>/esewa/checkout', payment_views.esewa_checkout, name='esewa_checkout'),
+    path('payment/esewa/confirm', payment_views.esewa_confirm, name='esewa_confirm'),
+    #
+    path('payment/<int:order_id>/khalti/checkout', payment_views.khalti_checkout, name='khalti_checkout'),
+    path('payment/khalti/confirm', payment_views.khalti_confirm, name='khalti_confirm'),
 ]
