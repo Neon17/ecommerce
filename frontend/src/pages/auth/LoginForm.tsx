@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from '@/src/context/AuthContext';
 import { useCart } from '@/src/context/CartContext';
 import { useNavigate, useLocation, Link } from "react-router-dom";
+import OAuthButton from "./OAuthButton";
 
 export default function LoginForm() {
     const { login } = useAuth();
@@ -68,6 +69,7 @@ export default function LoginForm() {
             >
                 {isLoading ? "Logging in..." : "Login"}
             </button>
+            <OAuthButton />
             <p className="mt-4 text-center text-sm text-gray-600">
                 Don't have an account?{" "}
                 <Link to="/register" state={{ from: location.state?.from }} className="text-blue-500 hover:underline">

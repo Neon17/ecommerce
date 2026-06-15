@@ -110,6 +110,11 @@ function OrdersPage() {
                             <div className="flex justify-between items-center mb-2">
                                 <span className="font-semibold">Order #{order.id}</span>
                                 <div className="flex items-center gap-3">
+                                    {order.is_paid && (
+                                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                                            Paid
+                                        </span>
+                                    )}
                                     <span
                                         className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                                             (STATUS_META[order.status] ?? STATUS_META.pending).className

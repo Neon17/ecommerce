@@ -7,6 +7,7 @@ interface AuthContextType {
     register: (username: string, email: string, password1: string, password2: string, remember?: boolean) => Promise<void>;
     login: (username: string, password: string, remember?: boolean) => Promise<void>;
     logout: () => void;
+    fetchUserData: (token: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,7 +39,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       if (!response.ok) {
         if (response.status === 401) {
-          clearAuthData(); 
+          clearAuthData();
         }
         return;
       }
@@ -135,7 +136,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, register, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, register, login, logout, fetchUserData }}>
       {children}
     </AuthContext.Provider>
   );

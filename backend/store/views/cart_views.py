@@ -98,29 +98,48 @@ def remove_from_cart(request: HttpRequest):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def merge_cart(request):
-    session_id = request.COOKIES.get('cart_session_id')
-    if not session_id:
-        return Response({'message': 'No session cart to merge'}, status=200)
+    # mode: None -> ask the user, then 'merge' / 'discard' / 'clear'
+    mode = request.data.get('mode')
 
-    try:
-        session_cart = Cart.objects.get(session_key=session_id, user=None)
-    except Cart.DoesNotExist:
-        return Response({'message': 'Session cart already merged or expired'}, status=200)
+    session_id = request.COOKIES.get('cart_session_id')
+    session_cart = None
+    if session_id:
+        session_cart = Cart.objects.filter(session_key=session_id, user=None).first()
 
     user_cart, __ = Cart.objects.get_or_create(user=request.user, session_key=None)
 
-    for session_item in session_cart.items.all():
-        user_item, created = CartItem.objects.get_or_create(
-            cart=user_cart,
-            product=session_item.product,
-            defaults={'quantity': session_item.quantity}
-        )
-        if not created:
-            user_item.quantity += session_item.quantity
-            user_item.save()
+    guest_items = list(session_cart.items.all()) if session_cart else []
+    if not guest_items:
+        return Response({'status': 'done', 'message': 'No guest cart'}, status=200)
 
+    # The guest cart has items -> always let the user decide what to do with it.
+    if mode is None:
+        return Response({
+            'status': 'needs_choice',
+            'guest_count': len(guest_items),
+            'user_count': user_cart.items.count(),
+        }, status=200)
+
+    if mode == 'discard':
+        # Don't merge. Leave the guest cart (and its cookie) intact so it comes
+        # back after logout. The account cart is untouched.
+        return Response({'status': 'done', 'message': 'Guest cart kept'}, status=200)
+
+    if mode == 'merge':
+        # Add guest quantities onto the account cart, then consume the guest cart.
+        for session_item in guest_items:
+            user_item, created = CartItem.objects.get_or_create(
+                cart=user_cart,
+                product=session_item.product,
+                defaults={'quantity': session_item.quantity}
+            )
+            if not created:
+                user_item.quantity += session_item.quantity
+                user_item.save()
+
+    # 'merge' and 'clear' both throw the guest cart away.
     session_cart.delete()
-    response = Response({'message': 'Cart merged successfully'}, status=200)
+    response = Response({'status': 'done', 'message': 'Cart updated'}, status=200)
     response.delete_cookie('cart_session_id')
     return response
 

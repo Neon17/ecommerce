@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from .views import auth_views
 from .views import payment_views
+from .views import google_auth_views
 
 urlpatterns = [
     path('register', auth_views.register_view, name='register'),
@@ -9,6 +10,7 @@ urlpatterns = [
     path('logout', auth_views.logout_view, name='logout'),
     path('refresh', auth_views.refresh_view, name='refresh'),
     path('user', auth_views.me, name='me'),
+    path('auth/google/', google_auth_views.GoogleLoginView.as_view(), name='google_login'),
 
     # catalog
     path('products/', views.get_products, name='get_products'),

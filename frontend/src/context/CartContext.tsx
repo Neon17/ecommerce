@@ -31,7 +31,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const [cartItems, setCartItems] = useState<CartItem[]>([])
     const [total, setTotal] = useState<number>(0)
     const [isCookieEnabled, setIsCookieEnabled] = useState<boolean>(true)
+    const [mergePrompt, setMergePrompt] = useState<{ guest_count: number; user_count: number } | null>(null)
     const { user } = useAuth();
+
+    const authHeaders = (): Record<string, string> => {
+        const headers: Record<string, string> = { "Content-Type": "application/json" }
+        const token = localStorage.getItem("token")
+        if (token) headers["Authorization"] = `Bearer ${token}`
+        return headers
+    }
 
     const applyServerCart = (cart: any) => {
         const items: CartItem[] = (cart.items || []).map((item: any) => ({
@@ -56,7 +64,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         try {
             const response = await fetch(`${BASEURL}/api/cart/`, {
                 method: "GET",
-                headers: { "Content-Type": "application/json" },
+                headers: authHeaders(),
                 credentials: "include",
             });
             if (response.ok) {
@@ -71,14 +79,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     };
 
     useEffect(() => {
-        if (!user) {
-            console.log("User logged out, clearing cart...")
-            setCartItems([])
-            setTotal(0)
-            localStorage.removeItem("cartItems")
-        } else {
-            fetchServerCart();
-        }
+        if (isCookieEnabled) fetchServerCart();
     }, [user])
 
     useEffect(() => {
@@ -88,26 +89,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             if (storedCart) {
                 saveLocalCart(JSON.parse(storedCart))
             }
-        } else {
-            const fetchCart = async () => {
-                try {
-                    const response = await fetch(`${BASEURL}/api/cart/`, {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        credentials: "include"
-                    })
-                    if (response.ok) {
-                        applyServerCart(await response.json())
-                    } else {
-                        console.error("Failed to fetch cart from server")
-                    }
-                } catch (error) {
-                    console.error("Error fetching cart:", error)
-                }
-            }
-            fetchCart()
         }
     }, [])
 
@@ -116,9 +97,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             try {
                 const response = await fetch(`${BASEURL}/api/cart/add/`, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: authHeaders(),
                     credentials: "include",
                     body: JSON.stringify({ product_id: product.id, quantity })
                 })
@@ -156,9 +135,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             try {
                 const response = await fetch(`${BASEURL}/api/cart/update/`, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: authHeaders(),
                     credentials: "include",
                     body: JSON.stringify({ product_id: productId, quantity })
                 })
@@ -183,9 +160,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             try {
                 const response = await fetch(`${BASEURL}/api/cart/remove/`, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: authHeaders(),
                     credentials: "include",
                     body: JSON.stringify({ product_id: productId })
                 })
@@ -210,18 +185,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const syncAfterLogin = async () => {
         const token = localStorage.getItem("token")
-        if (!token || cartItems.length === 0) return;
-        
+        if (!token) return;
+
         if (isCookieEnabled) {
             try {
-                await fetch(`${BASEURL}/api/merge-cart/`, {
+                const response = await fetch(`${BASEURL}/api/merge-cart/`, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    },
+                    headers: authHeaders(),
                     credentials: "include"
                 })
+                const data = await response.json()
+                if (data.status === "needs_choice") {
+                    setMergePrompt({ guest_count: data.guest_count, user_count: data.user_count })
+                    return
+                }
+                await fetchServerCart()
             } catch (error) {
                 console.error("Error merging cart:", error)
             }
@@ -251,10 +229,69 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
     }
 
+    const resolveMerge = async (mode: "merge" | "discard" | "clear") => {
+        try {
+            await fetch(`${BASEURL}/api/merge-cart/`, {
+                method: "POST",
+                headers: authHeaders(),
+                credentials: "include",
+                body: JSON.stringify({ mode })
+            })
+            await fetchServerCart()
+        } catch (error) {
+            console.error("Error resolving cart merge:", error)
+        } finally {
+            setMergePrompt(null)
+        }
+    }
+
     return (
         <CartContext.Provider value = {{ cartItems, total, addToCart, increaseQuantity, decreaseQuantity, removeFromCart, clearCart, syncAfterLogin }}>
             {children}
+            {mergePrompt && <MergeCartModal prompt={mergePrompt} onChoose={resolveMerge} />}
         </CartContext.Provider>
+    )
+}
+
+type MergeCartModalProps = {
+    prompt: { guest_count: number; user_count: number };
+    onChoose: (mode: "merge" | "discard" | "clear") => void;
+}
+
+function MergeCartModal({ prompt, onChoose }: MergeCartModalProps) {
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+            <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+                <h2 className="text-lg font-bold text-gray-900">Welcome back!</h2>
+                <p className="mt-2 text-sm text-gray-600">
+                    You have {prompt.guest_count} item{prompt.guest_count === 1 ? "" : "s"} in your guest cart
+                    {prompt.user_count > 0 && (
+                        <> and {prompt.user_count} item{prompt.user_count === 1 ? "" : "s"} saved to your account</>
+                    )}
+                    . What would you like to do?
+                </p>
+                <div className="mt-5 space-y-2">
+                    <button
+                        onClick={() => onChoose("merge")}
+                        className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+                    >
+                        Merge into my account cart
+                    </button>
+                    <button
+                        onClick={() => onChoose("discard")}
+                        className="w-full rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                        Keep guest cart for later
+                    </button>
+                    <button
+                        onClick={() => onChoose("clear")}
+                        className="w-full rounded-lg border border-red-300 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
+                    >
+                        Clear guest cart
+                    </button>
+                </div>
+            </div>
+        </div>
     )
 }
 

@@ -5,6 +5,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import { useCart } from '@/src/context/CartContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useState } from 'react';
+import OAuthButton from './OAuthButton';
 
 const RegisterForm = () => {
     const { register: registerUser } = useAuth();
@@ -89,6 +90,7 @@ const RegisterForm = () => {
             >
                 {isSubmitting ? "Registering..." : "Register"}
             </button>
+            <OAuthButton />
             <p className="mt-4 text-center text-sm text-gray-600">
                 Already have an account?{" "}
                 <Link to="/login" state={{ from: location.state?.from }} className="text-blue-500 hover:underline">
