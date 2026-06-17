@@ -26,6 +26,15 @@ const Navbar = () => {
                 {user ? (
                     <>
                         <Link to="/orders" className="text-gray-600 hover:text-gray-800">Orders</Link>
+                        <Link to="/profile" className="text-gray-600 hover:text-gray-800">Profile</Link>
+                        {user.is_order_manager && (
+                            <Link
+                                to="/admin"
+                                className="text-indigo-600 font-medium hover:text-indigo-800"
+                            >
+                                Admin
+                            </Link>
+                        )}
                         <button onClick={handleLogout} className="text-gray-600 hover:text-gray-800">
                             Logout
                         </button>

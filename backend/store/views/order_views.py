@@ -4,8 +4,44 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from ..models import Cart, Order, OrderItem
+from ..permissions import IsOrderManager
 from ..serializers import OrderSerializer
 
+@api_view(['GET'])
+@permission_classes([IsOrderManager])
+def get_all_orders(request: HttpRequest):
+    orders = Order.objects.all().order_by('-created_at')
+    orders_cleaned = OrderSerializer(orders, many=True)
+    return Response(orders_cleaned.data)
+
+
+# Admin-only: change the status of ANY order (approve / move along the pipeline).
+VALID_STATUSES = [choice[0] for choice in Order.STATUS_CHOICES]
+
+@api_view(['PATCH'])
+@permission_classes([IsOrderManager])
+def admin_update_order_status(request: HttpRequest, pk):
+    order = get_object_or_404(Order, pk=pk)
+
+    new_status = request.data.get('status')
+    if new_status not in VALID_STATUSES:
+        return Response(
+            {'error': f'Invalid status. Choose one of: {", ".join(VALID_STATUSES)}'},
+            status=400,
+        )
+
+    order.status = new_status
+    # Confirming an order also marks it as paid (covers Cash on Delivery approvals).
+    if new_status in ('confirmed', 'on_road', 'delivered'):
+        order.is_paid = True
+    order.save()
+
+    return Response({
+        'message': 'Order status updated',
+        'order_id': order.id,
+        'status': order.status,
+        'is_paid': order.is_paid,
+    })
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

@@ -1,4 +1,6 @@
 from django.urls import path
+
+from .views.google_auth_views import OAuthLoginView
 from . import views
 from .views import auth_views
 from .views import payment_views
@@ -10,7 +12,9 @@ urlpatterns = [
     path('logout', auth_views.logout_view, name='logout'),
     path('refresh', auth_views.refresh_view, name='refresh'),
     path('user', auth_views.me, name='me'),
-    path('auth/google/', google_auth_views.GoogleLoginView.as_view(), name='google_login'),
+    path('profile/email', auth_views.update_email, name='update_email'),
+    path('profile/password', auth_views.change_password, name='change_password'),
+    path('auth/<str:provider>/', OAuthLoginView.as_view(), name='google_login'),
 
     # catalog
     path('products/', views.get_products, name='get_products'),
@@ -32,6 +36,10 @@ urlpatterns = [
     path('orders/<int:pk>/update/', views.update_order, name='update_order'),
     path('orders/<int:pk>/delete/', views.delete_order, name='delete_order'),
     path('orders/create/', views.create_order, name='create_order'),
+
+    # admin / owner
+    path('admin/orders/', views.get_all_orders, name='admin_orders'),
+    path('admin/orders/<int:pk>/status/', views.admin_update_order_status, name='admin_update_order_status'),
 
     path('payment/<int:order_id>/esewa/checkout', payment_views.esewa_checkout, name='esewa_checkout'),
     path('payment/esewa/confirm', payment_views.esewa_confirm, name='esewa_confirm'),

@@ -2,6 +2,8 @@ import {useEffect, useRef} from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import {useAuth} from "@/src/context/AuthContext";
 
+const BASEURL = import.meta.env.VITE_DJANGO_BASE_URL || "http://localhost:8000";
+
 export default function OAuthCallback() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -23,7 +25,12 @@ export default function OAuthCallback() {
 
     const sendCodeToBackend = async (code: string, provider: string) => {
         try {
-            const response = await fetch(`http://localhost:8000/api/auth/${provider}/`, {
+            if (!provider) {
+                throw new Error("Provider is empty");
+            } else if (!["google", "facebook", "tiktok"].includes(provider)) {
+                throw new Error("Unsupported OAuth provider");
+            }
+            const response = await fetch(`${BASEURL}/api/auth/${provider}/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

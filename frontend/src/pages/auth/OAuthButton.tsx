@@ -1,21 +1,26 @@
 export default function OAuthButton() {
-    const googleAuthUrl = `${import.meta.env.VITE_GOOGLE_BASE_URL}?` + 
+    const redirectUri = `${import.meta.env.VITE_BASE_URL}/oauth/callback`; 
+
+    const googleAuthUrl = `${import.meta.env.VITE_GOOGLE_BASE_URL}?` +
         `client_id=${import.meta.env.VITE_GOOGLE_CLIENT_ID}` +
-        `&redirect_uri=${import.meta.env.VITE_GOOGLE_REDIRECT_URI}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&response_type=code` +
-        `&scope=openid%20email%20profile`;
+        `&scope=openid%20email%20profile` +
+        `&state=google`; 
 
     const facebookAuthUrl = `${import.meta.env.VITE_FACEBOOK_BASE_URL}?` +
         `client_id=${import.meta.env.VITE_FACEBOOK_CLIENT_ID}` +
-        `&redirect_uri=${import.meta.env.VITE_FACEBOOK_REDIRECT_URI}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&response_type=code` +
-        `&scope=email%20public_profile`;
+        `&scope=email%20public_profile` +
+        `&state=facebook`;
 
     const tiktokAuthUrl = `${import.meta.env.VITE_TIKTOK_BASE_URL}?` +
         `client_id=${import.meta.env.VITE_TIKTOK_CLIENT_ID}` +
-        `&redirect_uri=${import.meta.env.VITE_TIKTOK_REDIRECT_URI}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&response_type=code` +
-        `&scope=user.info.basic`;
+        `&scope=user.info.basic%20user.info.email` +
+        `&state=tiktok`; 
 
     return (
         <div className="flex justify-center items-center">
@@ -29,5 +34,5 @@ export default function OAuthButton() {
                 Tiktok
             </a>
         </div>
-    )
+    );
 }
