@@ -35,6 +35,14 @@ const Navbar = () => {
                                 Admin
                             </Link>
                         )}
+                        {user.is_shop_manager && (
+                            <Link
+                                to="/shop"
+                                className="text-indigo-600 font-medium hover:text-indigo-800"
+                            >
+                                My Shop
+                            </Link>
+                        )}
                         <button onClick={handleLogout} className="text-gray-600 hover:text-gray-800">
                             Logout
                         </button>

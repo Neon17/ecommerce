@@ -11,6 +11,8 @@ import RegisterForm from "@/src/pages/auth/RegisterForm";
 import OrdersPage from "@/src/pages/OrdersPage";
 import ProfilePage from "@/src/pages/ProfilePage";
 import AdminOrdersPage from "@/src/pages/AdminOrdersPage";
+import RequireShopManager from "@/src/components/RequireShopManager";
+import ShopDashboardPage from "@/src/pages/ShopDashboardPage";
 import EsewaCheckout from "./payments/EsewaCheckout";
 import KhaltiCheckout from "./payments/KhaltiCheckout";
 import OAuthCallback from "./pages/auth/OAuthCallback";
@@ -29,6 +31,7 @@ function App() {
               <Route path="/orders" element={<RequireAuth><OrdersPage /></RequireAuth>} />
               <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
               <Route path="/admin" element={<RequireAdmin><AdminOrdersPage /></RequireAdmin>} />
+              <Route path="/shop" element={<RequireShopManager><ShopDashboardPage /></RequireShopManager>} />
               <Route path="/checkout" element={<RequireAuth><CheckoutPage /></RequireAuth>} />
               <Route path="/esewa-checkout/:orderId" element={<EsewaCheckout orderId={0} />} />
               <Route path="/khalti-checkout/:orderId" element={<KhaltiCheckout orderId={0} />} /> {/* Placeholder for KhaltiCheckout */}

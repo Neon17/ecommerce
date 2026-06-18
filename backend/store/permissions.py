@@ -13,6 +13,25 @@ def is_order_manager(user):
     )
 
 
+def is_shop_manager(user):
+    """True if `user` can manage *some* shop.
+
+    Superusers, anyone who owns a Shop (the OneToOne `user.shop`), or members of
+    the 'Shop Managers' group. The frontend uses this to decide whether to show
+    the vendor dashboard; which shop they act on is still resolved per-request
+    from the X-Shop-Slug header / subdomain by ShopContextMiddleware.
+    """
+    return bool(
+        user
+        and user.is_authenticated
+        and (
+            user.is_superuser
+            or hasattr(user, 'shop')
+            or user.groups.filter(name=SHOP_MANAGER_GROUP).exists()
+        )
+    )
+
+
 class IsOrderManager(BasePermission):
     """Allows access only to superusers or members of the 'Order Managers' group."""
 
