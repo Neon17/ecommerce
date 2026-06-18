@@ -9,4 +9,12 @@ from .order_views import (
     get_all_orders,
     admin_update_order_status,
 )
+from .shop_views import (
+    ManageProductListCreateView,
+    ManageProductDetailView,
+    ShopOrderListView,
+    ShopOrderUpdateView,
+    CustomerOrderListView,
+    CheckoutView,
+)
 from .auth_views import register_view

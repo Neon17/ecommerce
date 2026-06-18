@@ -31,8 +31,11 @@ def admin_update_order_status(request: HttpRequest, pk):
         )
 
     order.status = new_status
-    # Confirming an order also marks it as paid (covers Cash on Delivery approvals).
-    if new_status in ('confirmed', 'on_road', 'delivered'):
+    # COD is collected in cash when the parcel is handed over, so a COD order
+    # only becomes paid once it's actually delivered. Online orders
+    # (eSewa/Khalti) have their is_paid flipped by the gateway confirm views,
+    # so we never touch payment state for them here.
+    if order.payment_method == 'COD' and new_status == 'delivered':
         order.is_paid = True
     order.save()
 

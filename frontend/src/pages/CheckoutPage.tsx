@@ -1,42 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/src/context/CartContext';
 import { useAuth } from '@/src/context/AuthContext';
-
-const BASEURL = import.meta.env.VITE_DJANGO_BASE_URL || 'http://localhost:8000';
-
-const refreshAccessToken = async (refreshToken: string): Promise<string | null> => {
-  try {
-    const response = await fetch(`${BASEURL}/api/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ refresh: refreshToken }),
-    });
-    const data = await response.json();
-    if (response.ok && data.token) {
-      localStorage.setItem("token", data.token);
-      return data.token;
-    }
-    if (response.status === 401) {
-      localStorage.removeItem("refresh_token");
-    }
-    return null;
-  } catch (error) {
-    console.error("Refresh failed:", error);
-    return null;
-  }
-};
-
-const getValidToken = async (): Promise<string | null> => {
-  let token = localStorage.getItem("token");
-  if (token) {
-    return token;
-  }
-  const refreshToken = localStorage.getItem("refresh_token");
-  if (!refreshToken) return null;
-  return await refreshAccessToken(refreshToken);
-};
+import { authFetch, BASEURL, SessionExpiredError } from '@/src/lib/auth';
 
 function CheckoutPage() {
   const navigate = useNavigate();
@@ -71,17 +37,9 @@ function CheckoutPage() {
     setMessage(null);
 
     try {
-      let token = await getValidToken();
-      if (!token) {
-        throw new Error("Your session has expired. Please log in again.");
-      }
-
-      let response = await fetch(`${BASEURL}/api/orders/create/`, {
+      const response = await authFetch(`${BASEURL}/api/orders/create/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
           items: cartItems.map(item => ({
@@ -92,31 +50,8 @@ function CheckoutPage() {
       });
 
       if (response.status === 401) {
-        const refreshToken = localStorage.getItem("refresh_token");
-        if (refreshToken) {
-          const newToken = await refreshAccessToken(refreshToken);
-          if (newToken) {
-            response = await fetch(`${BASEURL}/api/orders/create/`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${newToken}`,
-              },
-              body: JSON.stringify({
-                ...form,
-                items: cartItems.map(item => ({
-                  product_id: item.productId,
-                  quantity: item.quantity,
-                })),
-              }),
-            });
-            token = newToken;
-          }
-        }
-        if (response.status === 401) {
-          logout();
-          throw new Error("Session expired. Please log in again.");
-        }
+        logout();
+        throw new Error("Session expired. Please log in again.");
       }
 
       if (response.ok) {
@@ -128,6 +63,9 @@ function CheckoutPage() {
         setMessage(data.error || 'Failed to place order. Please try again.');
       }
     } catch (error: any) {
+      if (error instanceof SessionExpiredError) {
+        logout();
+      }
       setMessage(error.message || 'An error occurred. Please try again.');
     } finally {
       setLoading(false);

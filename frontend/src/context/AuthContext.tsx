@@ -1,5 +1,6 @@
 import type { User } from "../types/User";
 import { createContext, useState, useEffect, useContext, useRef } from "react";
+import { BASEURL, refreshAccessToken } from "@/src/lib/auth";
 
 interface AuthContextType {
     user: User | null;
@@ -11,8 +12,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const BASEURL = import.meta.env.VITE_DJANGO_BASE_URL || "http://localhost:8000";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -47,29 +46,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (isMounted.current) setUser(userData);
     } catch (error) {
       console.error("Error fetching user data:", error);
-    }
-  };
-
-  const refreshAccessToken = async (refreshToken: string): Promise<string | null> => {
-    try {
-      const response = await fetch(`${BASEURL}/api/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ refresh: refreshToken }),
-      });
-      const data = await response.json();
-      if (response.ok && data.token) {
-        localStorage.setItem("token", data.token);
-        return data.token;
-      }
-      if (response.status === 401) {
-        localStorage.removeItem("refresh_token");
-      }
-      return null;
-    } catch (error) {
-      console.error("Refresh failed:", error);
-      return null;
     }
   };
 

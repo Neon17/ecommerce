@@ -1,4 +1,8 @@
 from django.urls import path
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 from .views.google_auth_views import OAuthLoginView
 from . import views
@@ -16,7 +20,11 @@ urlpatterns = [
     path('profile/password', auth_views.change_password, name='change_password'),
     path('auth/<str:provider>/', OAuthLoginView.as_view(), name='google_login'),
 
-    # catalog
+    # JWT (djangorestframework-simplejwt) — React stores these tokens.
+    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # catalog (public storefront)
     path('products/', views.get_products, name='get_products'),
     path('categories/', views.get_categories, name='get_categories'),
     path('products/<int:pk>/', views.get_product, name='get_product'),
@@ -30,12 +38,22 @@ urlpatterns = [
     path('merge-cart/', views.merge_cart, name='merge_cart'),
     path('sync-local-cart/', views.sync_local_cart, name='sync_local_cart'),
 
-    # orders
+    # orders (customer)
     path('orders/', views.get_orders, name='orders'),
     path('orders/<int:pk>/', views.get_order, name='get_order'),
     path('orders/<int:pk>/update/', views.update_order, name='update_order'),
     path('orders/<int:pk>/delete/', views.delete_order, name='delete_order'),
-    path('orders/create/', views.create_order, name='create_order'),
+    # Checkout now groups the cart by shop -> 1 master Order + N SubOrders.
+    path('orders/create/', views.CheckoutView.as_view(), name='create_order'),
+    path('checkout/', views.CheckoutView.as_view(), name='checkout'),
+    # Master orders with their nested per-shop SubOrders.
+    path('my/orders/', views.CustomerOrderListView.as_view(), name='my_orders'),
+
+    # vendor / shop manager (scoped by X-Shop-Slug header)
+    path('shop/products/', views.ManageProductListCreateView.as_view(), name='shop_products'),
+    path('shop/products/<int:pk>/', views.ManageProductDetailView.as_view(), name='shop_product_detail'),
+    path('shop/orders/', views.ShopOrderListView.as_view(), name='shop_orders'),
+    path('shop/orders/<int:pk>/', views.ShopOrderUpdateView.as_view(), name='shop_order_update'),
 
     # admin / owner
     path('admin/orders/', views.get_all_orders, name='admin_orders'),
