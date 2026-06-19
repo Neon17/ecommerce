@@ -45,7 +45,6 @@ function OrdersPage() {
             const token = localStorage.getItem('token');
             const response = await fetch(`${BASEURL}/api/orders/`, {
                 headers: { Authorization: `Bearer ${token}` },
-                credentials: 'include',
             });
             if (!response.ok) {
                 throw new Error('Failed to load orders');
@@ -70,7 +69,6 @@ function OrdersPage() {
             const response = await fetch(`${BASEURL}/api/orders/${orderId}/delete/`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` },
-                credentials: 'include',
             });
             if (!response.ok) {
                 throw new Error('Failed to cancel order');

@@ -39,7 +39,6 @@ function ProfilePage() {
             const res = await fetch(`${BASEURL}/api/profile/email`, {
                 method: 'PATCH',
                 headers: authHeaders(),
-                credentials: 'include',
                 body: JSON.stringify({ email }),
             });
             const data = await res.json();
@@ -62,7 +61,6 @@ function ProfilePage() {
             const res = await fetch(`${BASEURL}/api/profile/password`, {
                 method: 'POST',
                 headers: authHeaders(),
-                credentials: 'include',
                 body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
             });
             const data = await res.json();

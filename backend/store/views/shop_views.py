@@ -1,7 +1,7 @@
 """Multi-vendor (marketplace) views.
 
 All of these rely on `request.shop`, which is attached by ShopContextMiddleware
-from the `X-Shop-Slug` request header.
+from the request subdomain.
 """
 from django.db import transaction
 from rest_framework import generics
@@ -22,14 +22,14 @@ from ..serializers import (
 class ShopScopedMixin:
     """Ensures `request.shop` exists before any shop-scoped query runs.
 
-    Without it a manager request with no/unknown X-Shop-Slug header would
-    silently return an empty list instead of a clear error.
+    Without it a manager request on an unknown subdomain would silently return
+    an empty list instead of a clear error.
     """
 
     def get_shop(self):
         shop = getattr(self.request, 'shop', None)
         if shop is None:
-            raise NotFound("No shop in context. Send a valid 'X-Shop-Slug' header.")
+            raise NotFound("No shop in context. Open your shop's subdomain.")
         return shop
 
 class ManageProductListCreateView(ShopScopedMixin, generics.ListCreateAPIView):

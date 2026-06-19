@@ -2,21 +2,19 @@ from django.http import HttpRequest
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
-from ..cart_utils import get_or_create_cart, set_cart_session_cookie
+from ..cart_utils import get_or_create_cart
 from ..models import Product, Cart, CartItem
 from ..serializers import CartSerializer
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_cart(request: HttpRequest):
-    cart, new_session_id = get_or_create_cart(request)
-    serializer = CartSerializer(cart)
-    response =  Response(serializer.data)
-    if new_session_id:
-        set_cart_session_cookie(response, new_session_id)
-    return response
+    cart = get_or_create_cart(request)
+    return Response(CartSerializer(cart).data)
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def update_cart(request: HttpRequest):
     quantity_raw = request.data.get('quantity')
     if quantity_raw is None or not str(quantity_raw).isdigit() or int(quantity_raw) < 1:
@@ -34,7 +32,7 @@ def update_cart(request: HttpRequest):
     except Product.DoesNotExist:
         return Response({'error': 'Product not found'}, status=404)
 
-    cart, new_session_id = get_or_create_cart(request)
+    cart = get_or_create_cart(request)
     cart_item = CartItem.objects.filter(cart=cart, product=product).first()
     if not cart_item:
         return Response({'error': 'Cart item not found'}, status=404)
@@ -42,13 +40,10 @@ def update_cart(request: HttpRequest):
     cart_item.quantity = int(quantity)
     cart_item.save()
 
-    serializer = CartSerializer(cart)
-    response = Response(serializer.data)
-    if new_session_id:
-        set_cart_session_cookie(response, new_session_id)
-    return response
+    return Response(CartSerializer(cart).data)
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def add_to_cart(request: HttpRequest):
     product_id = request.data.get('product_id')
     quantity_raw = request.data.get('quantity', 1)
@@ -65,7 +60,7 @@ def add_to_cart(request: HttpRequest):
     except Product.DoesNotExist:
         return Response({'error': 'Product not found'}, status=404)
 
-    cart, new_session_id = get_or_create_cart(request)
+    cart = get_or_create_cart(request)
     cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
     cart_item.quantity += int(quantity)
     if cart_item.quantity <= 0:
@@ -73,13 +68,10 @@ def add_to_cart(request: HttpRequest):
     else:
         cart_item.save()
 
-    serializer = CartSerializer(cart)
-    response = Response(serializer.data)
-    if new_session_id:
-        set_cart_session_cookie(response, new_session_id)
-    return response
+    return Response(CartSerializer(cart).data)
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def remove_from_cart(request: HttpRequest):
     product_id = request.data.get('product_id')
     try:
@@ -87,68 +79,16 @@ def remove_from_cart(request: HttpRequest):
     except Product.DoesNotExist:
         return Response({'error': 'Product not found'}, status=404)
 
-    cart, new_session_id = get_or_create_cart(request)
+    cart = get_or_create_cart(request)
     CartItem.objects.filter(cart=cart, product=product).delete()
-    serializer = CartSerializer(cart)
-    response = Response(serializer.data)
-    if new_session_id:
-        set_cart_session_cookie(response, new_session_id)
-    return response
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def merge_cart(request):
-    # mode: None -> ask the user, then 'merge' / 'discard' / 'clear'
-    mode = request.data.get('mode')
-
-    session_id = request.COOKIES.get('cart_session_id')
-    session_cart = None
-    if session_id:
-        session_cart = Cart.objects.filter(session_key=session_id, user=None).first()
-
-    user_cart, __ = Cart.objects.get_or_create(user=request.user, session_key=None)
-
-    guest_items = list(session_cart.items.all()) if session_cart else []
-    if not guest_items:
-        return Response({'status': 'done', 'message': 'No guest cart'}, status=200)
-
-    # The guest cart has items -> always let the user decide what to do with it.
-    if mode is None:
-        return Response({
-            'status': 'needs_choice',
-            'guest_count': len(guest_items),
-            'user_count': user_cart.items.count(),
-        }, status=200)
-
-    if mode == 'discard':
-        # Don't merge. Leave the guest cart (and its cookie) intact so it comes
-        # back after logout. The account cart is untouched.
-        return Response({'status': 'done', 'message': 'Guest cart kept'}, status=200)
-
-    if mode == 'merge':
-        # Add guest quantities onto the account cart, then consume the guest cart.
-        for session_item in guest_items:
-            user_item, created = CartItem.objects.get_or_create(
-                cart=user_cart,
-                product=session_item.product,
-                defaults={'quantity': session_item.quantity}
-            )
-            if not created:
-                user_item.quantity += session_item.quantity
-                user_item.save()
-
-    # 'merge' and 'clear' both throw the guest cart away.
-    session_cart.delete()
-    response = Response({'status': 'done', 'message': 'Cart updated'}, status=200)
-    response.delete_cookie('cart_session_id')
-    return response
+    return Response(CartSerializer(cart).data)
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def sync_local_cart(request):
     items = request.data.get('items', [])  # list of {product_id, quantity}
-    user_cart, _ = Cart.objects.get_or_create(user=request.user, session_key=None)
+    user_cart, _ = Cart.objects.get_or_create(user=request.user)
 
     for item in items:
         product_id = item.get('product_id')
@@ -164,4 +104,4 @@ def sync_local_cart(request):
             cart_item.quantity += quantity
         cart_item.save()
 
-    return Response({'message': 'Local cart synced'})
+    return Response(CartSerializer(user_cart).data)

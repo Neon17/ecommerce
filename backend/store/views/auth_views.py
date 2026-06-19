@@ -43,6 +43,16 @@ def login_view(request):
             {"error": "Invalid username or password"},
             status=status.HTTP_401_UNAUTHORIZED,
         )
+
+    # A shop subdomain (request.shop, set by ShopContextMiddleware) is a
+    # manager-only surface — only that shop's owner (or a superuser) may sign in.
+    shop = getattr(request, 'shop', None)
+    if shop is not None and not (user.is_superuser or shop.owner_id == user.id):
+        return Response(
+            {"error": "Only this shop's manager can sign in here."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
     return Response({**tokens_for_user(user), "user": UserSerializer(user).data})
 
 

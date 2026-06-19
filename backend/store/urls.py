@@ -35,7 +35,6 @@ urlpatterns = [
     path('cart/add/', views.add_to_cart),
     path('cart/remove/', views.remove_from_cart),
     path('cart/update/', views.update_cart),
-    path('merge-cart/', views.merge_cart, name='merge_cart'),
     path('sync-local-cart/', views.sync_local_cart, name='sync_local_cart'),
 
     # orders (customer)
@@ -49,7 +48,7 @@ urlpatterns = [
     # Master orders with their nested per-shop SubOrders.
     path('my/orders/', views.CustomerOrderListView.as_view(), name='my_orders'),
 
-    # vendor / shop manager (scoped by X-Shop-Slug header)
+    # vendor / shop manager (scoped by the request subdomain)
     path('shop/products/', views.ManageProductListCreateView.as_view(), name='shop_products'),
     path('shop/products/<int:pk>/', views.ManageProductDetailView.as_view(), name='shop_product_detail'),
     path('shop/orders/', views.ShopOrderListView.as_view(), name='shop_orders'),

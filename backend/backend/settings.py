@@ -50,7 +50,8 @@ SECRET_KEY = 'django-insecure-m!)14(!2+7v))4b)zg466(1-^^yq_0-+-wam_opd^v%dw4xr(=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS = ['localhost', '.localhost', '127.0.0.1']
 
 
 # Application definition
@@ -156,16 +157,10 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://(?:\w+\-?\w+\.)*localhost:3000/?$",
 ]
-CORS_ALLOW_CREDENTIALS = True
-
-# Let the browser send our custom multi-vendor header (React -> X-Shop-Slug).
-from corsheaders.defaults import default_headers
-CORS_ALLOW_HEADERS = list(default_headers) + [
-    'x-shop-slug',
-]
+CORS_ALLOW_CREDENTIALS = False
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

@@ -54,7 +54,6 @@ function AdminOrdersPage() {
             const token = localStorage.getItem('token');
             const response = await fetch(`${BASEURL}/api/admin/orders/`, {
                 headers: { Authorization: `Bearer ${token}` },
-                credentials: 'include',
             });
             if (!response.ok) {
                 throw new Error('Failed to load orders');
@@ -83,7 +82,6 @@ function AdminOrdersPage() {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
-                credentials: 'include',
                 body: JSON.stringify({ status }),
             });
             const data = await response.json();

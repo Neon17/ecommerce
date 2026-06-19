@@ -2,6 +2,8 @@ import { Link, useParams } from "react-router-dom";
 import type { Product } from "@/src/types/Product";
 import { useEffect, useState } from "react";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
+import { slugFromSubdomain } from "../lib/shop";
 
 function ProductDetails() {
   const { id } = useParams();
@@ -9,7 +11,12 @@ function ProductDetails() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { addToCart } = useCart();
+  const { cartItems, addToCart, increaseQuantity, decreaseQuantity, removeFromCart } = useCart();
+  const { user } = useAuth();
+
+  // No buyer cart on a shop subdomain (manager-only) or for a shop manager.
+  const cartDisabled = slugFromSubdomain() || !!user?.is_shop_manager;
+  const quantity = product ? (cartItems.find(item => item.productId === product.id)?.quantity ?? 0) : 0;
 
   useEffect(() => {
     console.log("Fetching product with id:", id);
@@ -36,7 +43,7 @@ function ProductDetails() {
 
   // Safe image URL builder
   const getImageUrl = (imagePath: string | undefined) => {
-    if (!imagePath) return "https://placehold.co/600x400?text=No+Image";
+    if (!imagePath) return "";
     if (imagePath.startsWith("http")) return imagePath;
     // Remove leading slash if present to avoid double slash
     const cleanPath = imagePath.startsWith("/") ? imagePath.slice(1) : imagePath;
@@ -107,7 +114,7 @@ function ProductDetails() {
             alt={product.name || "Product"}
             className="w-full h-full object-cover"
             onError={(e) => {
-              e.currentTarget.src = "https://placehold.co/600x400?text=Image+Not+Found";
+              e.currentTarget.src = "";
             }}
           />
         </div>
@@ -156,12 +163,32 @@ function ProductDetails() {
             >
               ← Back to Products
             </Link>
-            <button
-              onClick={() => addToCart(product)}
-              className="flex-1 px-4 py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition shadow-md"
-            >
-              Add to Cart 🛒
-            </button>
+            {!cartDisabled && (
+              quantity === 0 ? (
+                <button
+                  onClick={() => addToCart(product)}
+                  className="flex-1 px-4 py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition shadow-md"
+                >
+                  Add to Cart 🛒
+                </button>
+              ) : (
+                <div className="flex-1 flex items-center justify-center gap-4">
+                  <button
+                    onClick={() => quantity <= 1 ? removeFromCart(product.id) : decreaseQuantity(product.id)}
+                    className="w-11 h-11 flex items-center justify-center rounded-xl bg-gray-100 text-gray-700 text-xl hover:bg-gray-200 active:scale-95"
+                  >
+                    −
+                  </button>
+                  <span className="w-8 text-center text-lg font-semibold">{quantity}</span>
+                  <button
+                    onClick={() => increaseQuantity(product.id)}
+                    className="w-11 h-11 flex items-center justify-center rounded-xl bg-indigo-600 text-white text-xl hover:bg-indigo-700 active:scale-95"
+                  >
+                    +
+                  </button>
+                </div>
+              )
+            )}
           </div>
         </div>
       </div>

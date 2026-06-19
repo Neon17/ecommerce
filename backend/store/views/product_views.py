@@ -8,6 +8,11 @@ from ..serializers import ProductSerializer, CategorySerializer
 @api_view(['GET'])
 def get_products(request: HttpRequest):
     products = Product.objects.select_related('category').all()
+    # On a shop subdomain, ShopContextMiddleware sets request.shop — scope the
+    # storefront to that shop. On the main domain it stays the full catalog.
+    shop = getattr(request, 'shop', None)
+    if shop:
+        products = products.filter(shop=shop)
     serializer = ProductSerializer(products, many=True)
     return Response(serializer.data)
 

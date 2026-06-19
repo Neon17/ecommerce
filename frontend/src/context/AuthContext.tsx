@@ -1,6 +1,8 @@
 import type { User } from "../types/User";
 import { createContext, useState, useEffect, useContext, useRef } from "react";
 import { BASEURL, refreshAccessToken } from "@/src/lib/auth";
+import { getShopSlug, setShopSlug, shopFetch } from "../lib/shop";
+import type { Shop } from "../types/Shop";
 
 interface AuthContextType {
     user: User | null;
@@ -17,6 +19,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const isMounted = useRef(true);
+  const [shopSlug] = useState<string | null>(getShopSlug());
+  const [, setShop] = useState<Shop | null>(null);
 
   useEffect(() => {
     isMounted.current = true;
@@ -34,7 +38,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const response = await fetch(`${BASEURL}/api/user`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
-        credentials: "include",
       });
       if (!response.ok) {
         if (response.status === 401) {
@@ -62,15 +65,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
       if (isMounted.current) setLoading(false);
+      const slug = getShopSlug();
+      if (slug) {
+        const response = await shopFetch(slug)
+        if (response.ok) {
+          const data = await response.json();
+          setShop(data);
+          setShopSlug(slug);
+          console.log("Shop data fetched:", data);
+        }
+      }
     };
     init();
   }, []);
 
   const login = async (username: string, password: string, remember = false) => {
+
     const response = await fetch(`${BASEURL}/api/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify({ username, password }),
     });
     const data = await response.json();
@@ -87,10 +100,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const register = async (username: string, email: string, password1: string, password2: string, remember = false) => {
+    if (shopSlug) {
+      throw new Error("Registration is not allowed in a shop subdomain. Please register from the main domain.");
+    }
+
     const response = await fetch(`${BASEURL}/api/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify({ username, email, password1, password2 }),
     });
     const data = await response.json();
@@ -108,7 +124,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = () => {
     clearAuthData();
-    fetch(`${BASEURL}/api/logout`, { method: "POST", credentials: "include" }).catch(console.error);
+    fetch(`${BASEURL}/api/logout`, { method: "POST" }).catch(console.error);
   };
 
   return (

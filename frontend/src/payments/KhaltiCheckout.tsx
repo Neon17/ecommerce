@@ -31,7 +31,6 @@ export default function KhaltiCheckout({ orderId, onSuccess, onError }: KhaltiCh
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        credentials: 'include',
       });
 
       if (!response.ok) {

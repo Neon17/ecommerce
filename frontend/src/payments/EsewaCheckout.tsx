@@ -31,7 +31,6 @@ export default function EsewaCheckout({ orderId, onSuccess, onError }: EsewaChec
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        credentials: 'include',
       });
 
       if (!response.ok) {

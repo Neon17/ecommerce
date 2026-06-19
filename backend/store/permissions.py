@@ -19,7 +19,7 @@ def is_shop_manager(user):
     Superusers, anyone who owns a Shop (the OneToOne `user.shop`), or members of
     the 'Shop Managers' group. The frontend uses this to decide whether to show
     the vendor dashboard; which shop they act on is still resolved per-request
-    from the X-Shop-Slug header / subdomain by ShopContextMiddleware.
+    from the subdomain by ShopContextMiddleware.
     """
     return bool(
         user

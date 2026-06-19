@@ -1,4 +1,5 @@
-import {Route, Routes, BrowserRouter as Router} from "react-router-dom";
+import {Route, Routes, BrowserRouter as Router, Navigate} from "react-router-dom";
+import {slugFromSubdomain} from "@/src/lib/shop";
 import ProductList from "@/src/pages/ProductList";
 import ProductDetails from "@/src/pages/ProductDetails";
 import CartPage from "@/src/pages/CartPage";
@@ -18,21 +19,35 @@ import KhaltiCheckout from "./payments/KhaltiCheckout";
 import OAuthCallback from "./pages/auth/OAuthCallback";
 
 function App() {
+    // A shop subdomain is a manager-only surface — customer cart/orders/checkout
+    // live on the main domain. On a subdomain those routes redirect home.
+    const onSubdomain = slugFromSubdomain();
+
     return (
       <Router>
          <Navbar />
           <Routes>
               <Route path="/" element={<ProductList />} />
               <Route path="/products/:id" element={<ProductDetails />} />
-              <Route path="/cart" element={<CartPage />} />
               <Route path="/login" element={<LoginForm />} />
               <Route path="/register" element={<RegisterForm />} />
               <Route path="/oauth/callback" element={<OAuthCallback />} />
-              <Route path="/orders" element={<RequireAuth><OrdersPage /></RequireAuth>} />
               <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
               <Route path="/admin" element={<RequireAdmin><AdminOrdersPage /></RequireAdmin>} />
               <Route path="/shop" element={<RequireShopManager><ShopDashboardPage /></RequireShopManager>} />
-              <Route path="/checkout" element={<RequireAuth><CheckoutPage /></RequireAuth>} />
+              {onSubdomain ? (
+                  <>
+                      <Route path="/cart" element={<Navigate to="/" replace />} />
+                      <Route path="/orders" element={<Navigate to="/" replace />} />
+                      <Route path="/checkout" element={<Navigate to="/" replace />} />
+                  </>
+              ) : (
+                  <>
+                      <Route path="/cart" element={<CartPage />} />
+                      <Route path="/orders" element={<RequireAuth><OrdersPage /></RequireAuth>} />
+                      <Route path="/checkout" element={<RequireAuth><CheckoutPage /></RequireAuth>} />
+                  </>
+              )}
               <Route path="/esewa-checkout/:orderId" element={<EsewaCheckout orderId={0} />} />
               <Route path="/khalti-checkout/:orderId" element={<KhaltiCheckout orderId={0} />} /> {/* Placeholder for KhaltiCheckout */}
           </Routes>

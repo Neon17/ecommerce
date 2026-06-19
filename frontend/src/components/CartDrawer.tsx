@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 const BASEURL = import.meta.env.VITE_DJANGO_BASE_URL || "http://localhost:8000";
 
 const getImageUrl = (path?: string) => {
-    if (!path) return "https://placehold.co/100x100?text=No+Image";
+    if (!path) return "";
     if (path.startsWith("http")) return path;
     const clean = path.startsWith("/") ? path.slice(1) : path;
     return `${BASEURL}/${clean}`;
@@ -57,7 +57,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                                         alt={item.name}
                                         className="w-16 h-16 object-contain rounded"
                                         onError={(e) => {
-                                            e.currentTarget.src = "https://placehold.co/100x100?text=No+Image";
+                                            e.currentTarget.src = "";
                                         }}
                                     />
                                     <div className="flex-1 ml-4">

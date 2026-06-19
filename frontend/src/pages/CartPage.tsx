@@ -1,11 +1,13 @@
+import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const BASEURL = import.meta.env.VITE_DJANGO_BASE_URL || "http://localhost:8000";
 
 
 const getImageUrl = (path?: string) => {
-    if (!path) return "https://placehold.co/100x100?text=No+Image";
+    if (!path) return "";
     if (path.startsWith("http")) return path;
     const clean = path.startsWith("/") ? path.slice(1) : path;
     return `${BASEURL}/${clean}`;
@@ -13,6 +15,15 @@ const getImageUrl = (path?: string) => {
 
 function CartPage() {
     const { cartItems, total, removeFromCart, increaseQuantity, decreaseQuantity } = useCart();
+    const { user, loading } = useAuth()
+    const Navigate = useNavigate()
+
+    useEffect(() => {
+        if (loading) return;
+        if (user?.is_shop_manager) {
+            Navigate("/");
+        }
+    }, [user, loading])
 
     return (
         <div className="min-h-screen bg-gray-100 py-10 px-4">
@@ -34,7 +45,7 @@ function CartPage() {
                                         alt={item.name}
                                         className="w-20 h-20 object-contain rounded"
                                         onError={(e) => {
-                                            e.currentTarget.src = "https://placehold.co/100x100?text=No+Image";
+                                            e.currentTarget.src = "";
                                         }}
                                     />
                                     <div className="flex-1 ml-6">
