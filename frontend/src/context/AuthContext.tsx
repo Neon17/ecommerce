@@ -1,6 +1,6 @@
 import type { User } from "../types/User";
 import { createContext, useState, useEffect, useContext, useRef } from "react";
-import { BASEURL, refreshAccessToken } from "@/src/lib/auth";
+import { BASEURL, refreshAccessToken, setToken, setRefreshToken, clearTokens } from "@/src/lib/auth";
 import { getShopSlug, setShopSlug, shopFetch } from "../lib/shop";
 import type { Shop } from "../types/Shop";
 
@@ -28,8 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const clearAuthData = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("refresh_token");
+    clearTokens();
     if (isMounted.current) setUser(null);
   };
 
@@ -67,12 +66,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (isMounted.current) setLoading(false);
       const slug = getShopSlug();
       if (slug) {
-        const response = await shopFetch(slug)
-        if (response.ok) {
-          const data = await response.json();
-          setShop(data);
-          setShopSlug(slug);
-          console.log("Shop data fetched:", data);
+        try {
+          const response = await shopFetch(slug);
+          if (response.ok) {
+            const data = await response.json();
+            setShop(data);
+            setShopSlug(slug);
+          }
+        } catch {
+          // Best-effort shop hydration — never let it break auth init.
         }
       }
     };
@@ -91,8 +93,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       throw new Error(data.error || "Invalid username or password");
     }
     if (data.token) {
-      localStorage.setItem("token", data.token);
-      if (remember && data.refresh) localStorage.setItem("refresh_token", data.refresh);
+      setToken(data.token);
+      if (remember && data.refresh) setRefreshToken(data.refresh);
       await fetchUserData(data.token);
     } else {
       throw new Error("Invalid server response");
@@ -114,8 +116,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       throw new Error(data.error || "Registration failed");
     }
     if (data.token) {
-      localStorage.setItem("token", data.token);
-      if (remember && data.refresh) localStorage.setItem("refresh_token", data.refresh);
+      setToken(data.token);
+      if (remember && data.refresh) setRefreshToken(data.refresh);
       await fetchUserData(data.token);
     } else {
       throw new Error("Invalid server response");

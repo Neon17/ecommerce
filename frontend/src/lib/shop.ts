@@ -2,7 +2,11 @@ import { authFetch, BASEURL } from "@/src/lib/auth";
 
 const SHOP_SLUG_KEY = "shop_slug";
 
-const RESERVED = ["www", "api", "localhost", "127"];
+const RESERVED = ["www", "api", "localhost", "127", "admin"];
+
+
+export const isAdminSubdomain = (): boolean =>
+  window.location.hostname.split(".")[0] === "admin";
 
 export const getShopSlug = (): string | null => {
   const host = window.location.hostname; // no port
@@ -26,7 +30,5 @@ export const slugFromSubdomain = (): boolean => {
 export const shopFetch = (path: string, init: RequestInit = {}): Promise<Response> => {
   const slug = getShopSlug();
   if (!slug) throw new Error("No shop selected. Open your shop's subdomain or pick one.");
-  // BASEURL is already scoped to the shop's subdomain, so the backend resolves
-  // the shop from the host — no header needed.
   return authFetch(`${BASEURL}${path}`, init);
 };

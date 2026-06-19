@@ -8,4 +8,5 @@ export type Product = {
     id: number;
     name: string;
   };
+  shop?: string;
 };

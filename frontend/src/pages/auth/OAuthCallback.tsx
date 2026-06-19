@@ -1,6 +1,7 @@
 import {useEffect, useRef} from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import {useAuth} from "@/src/context/AuthContext";
+import {setToken, setRefreshToken} from "@/src/lib/auth";
 
 const BASEURL = import.meta.env.VITE_DJANGO_BASE_URL || "http://localhost:8000";
 
@@ -42,9 +43,9 @@ export default function OAuthCallback() {
             if (!response.ok) {
                 throw new Error(data.error || "OAuth login failed");
             }
-            localStorage.setItem("token", data.access);
+            setToken(data.access);
             if (data.refresh) {
-                localStorage.setItem("refresh_token", data.refresh);
+                setRefreshToken(data.refresh);
             }
             await fetchUserData(data.access);
             navigate("/", {replace: true});

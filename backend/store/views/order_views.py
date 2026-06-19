@@ -15,7 +15,6 @@ def get_all_orders(request: HttpRequest):
     return Response(orders_cleaned.data)
 
 
-# Admin-only: change the status of ANY order (approve / move along the pipeline).
 VALID_STATUSES = [choice[0] for choice in Order.STATUS_CHOICES]
 
 @api_view(['PATCH'])
@@ -31,10 +30,6 @@ def admin_update_order_status(request: HttpRequest, pk):
         )
 
     order.status = new_status
-    # COD is collected in cash when the parcel is handed over, so a COD order
-    # only becomes paid once it's actually delivered. Online orders
-    # (eSewa/Khalti) have their is_paid flipped by the gateway confirm views,
-    # so we never touch payment state for them here.
     if order.payment_method == 'COD' and new_status == 'delivered':
         order.is_paid = True
     order.save()

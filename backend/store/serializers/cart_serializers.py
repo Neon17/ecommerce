@@ -11,9 +11,14 @@ class CartItemSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CartSerializer(serializers.ModelSerializer):
-    items = CartItemSerializer(many=True, read_only=True)
+    # Ordered by id so the cart never reshuffles between requests — otherwise the
+    # drawer reorders on every add/update and looks like items are jumping around.
+    items = serializers.SerializerMethodField()
     total = serializers.ReadOnlyField()
 
     class Meta:
         model = Cart
         fields = '__all__'
+
+    def get_items(self, obj):
+        return CartItemSerializer(obj.items.order_by('id'), many=True).data

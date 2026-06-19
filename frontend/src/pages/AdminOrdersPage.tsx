@@ -9,6 +9,15 @@ type OrderItem = {
     price: string;
 };
 
+type SubOrder = {
+    id: number;
+    shop: number;
+    shop_name: string;
+    subtotal: string;
+    status: string;
+    items: OrderItem[];
+};
+
 type Order = {
     id: number;
     username: string;
@@ -21,9 +30,19 @@ type Order = {
     status: string;
     is_paid: boolean;
     items: OrderItem[];
+    sub_orders: SubOrder[];
 };
 
-// The order pipeline. Keep in sync with Order.STATUS_CHOICES on the backend.
+const SUBORDER_STATUS_META: Record<string, { label: string; className: string }> = {
+    pending: { label: 'Pending', className: 'bg-yellow-100 text-yellow-700' },
+    confirmed: { label: 'Confirmed', className: 'bg-green-100 text-green-700' },
+    shipped: { label: 'Shipped', className: 'bg-indigo-100 text-indigo-700' },
+    delivered: { label: 'Delivered', className: 'bg-gray-200 text-gray-700' },
+};
+
+const subStatusMeta = (value: string) =>
+    SUBORDER_STATUS_META[value] ?? SUBORDER_STATUS_META.pending;
+
 const STATUS_OPTIONS = [
     { value: 'pending', label: 'Pending' },
     { value: 'paid', label: 'Paid' },
@@ -48,6 +67,14 @@ function AdminOrdersPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [savingId, setSavingId] = useState<number | null>(null);
+    const [expanded, setExpanded] = useState<Set<number>>(new Set());
+
+    const toggleExpanded = (orderId: number) =>
+        setExpanded((prev) => {
+            const next = new Set(prev);
+            next.has(orderId) ? next.delete(orderId) : next.add(orderId);
+            return next;
+        });
 
     const fetchOrders = async () => {
         try {
@@ -196,6 +223,65 @@ function AdminOrdersPage() {
                                     </ul>
                                 </div>
                             </div>
+
+                            {/* Per-shop breakdown — which shop, and what each has done. */}
+                            {order.sub_orders?.length > 0 && (
+                                <div className="mt-4 pt-4 border-t">
+                                    <button
+                                        onClick={() => toggleExpanded(order.id)}
+                                        className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                                    >
+                                        {expanded.has(order.id) ? '▾' : '▸'} Sub-orders
+                                        <span className="text-gray-400 font-normal">
+                                            {' '}({order.sub_orders.length} shop{order.sub_orders.length > 1 ? 's' : ''})
+                                        </span>
+                                    </button>
+
+                                    {expanded.has(order.id) && (
+                                        <div className="mt-3 space-y-3">
+                                            {order.sub_orders.map((sub) => {
+                                                const meta = subStatusMeta(sub.status);
+                                                return (
+                                                    <div
+                                                        key={sub.id}
+                                                        className="border border-gray-100 rounded-lg p-3 bg-gray-50"
+                                                    >
+                                                        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-medium text-gray-900">
+                                                                    {sub.shop_name}
+                                                                </span>
+                                                                <span className="text-xs text-gray-400">
+                                                                    (sub-order #{sub.id})
+                                                                </span>
+                                                                <span
+                                                                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${meta.className}`}
+                                                                >
+                                                                    {meta.label}
+                                                                </span>
+                                                            </div>
+                                                            <span className="font-semibold text-gray-700">
+                                                                ${sub.subtotal}
+                                                            </span>
+                                                        </div>
+                                                        <ul className="divide-y text-sm">
+                                                            {sub.items.map((it) => (
+                                                                <li
+                                                                    key={it.id}
+                                                                    className="flex justify-between py-1 text-gray-700"
+                                                                >
+                                                                    <span>{it.product_name} × {it.quantity}</span>
+                                                                    <span>${it.price}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Admin actions */}
                             <div className="mt-4 pt-4 border-t flex flex-wrap items-center gap-3">

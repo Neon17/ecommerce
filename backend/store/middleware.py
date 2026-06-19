@@ -16,6 +16,7 @@ class ShopContextMiddleware:
 
     def __call__(self, request):
         request.shop = None
+        request.admin = False
 
         host = request.get_host().split(':')[0]
         parts = host.split('.')
@@ -24,5 +25,7 @@ class ShopContextMiddleware:
                 request.shop = Shop.objects.get(slug=parts[0])
             except Shop.DoesNotExist:
                 request.shop = None
+                if (parts[0] == 'admin'):
+                    request.admin = True
 
         return self.get_response(request)

@@ -9,9 +9,6 @@ class Category(models.Model):
         return self.name
 
 class Product(models.Model):
-    # Each product belongs to a vendor shop. Nullable so existing rows migrate
-    # cleanly; run `manage.py seed_legacy_shop` to backfill. You can tighten this
-    # to null=False later once every product has a shop.
     shop = models.ForeignKey(
         'store.Shop', related_name='products', on_delete=models.CASCADE,
         null=True, blank=True,

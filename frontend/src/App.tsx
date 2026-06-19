@@ -1,5 +1,5 @@
 import {Route, Routes, BrowserRouter as Router, Navigate} from "react-router-dom";
-import {slugFromSubdomain} from "@/src/lib/shop";
+import {slugFromSubdomain, isAdminSubdomain} from "@/src/lib/shop";
 import ProductList from "@/src/pages/ProductList";
 import ProductDetails from "@/src/pages/ProductDetails";
 import CartPage from "@/src/pages/CartPage";
@@ -19,9 +19,24 @@ import KhaltiCheckout from "./payments/KhaltiCheckout";
 import OAuthCallback from "./pages/auth/OAuthCallback";
 
 function App() {
-    // A shop subdomain is a manager-only surface — customer cart/orders/checkout
-    // live on the main domain. On a subdomain those routes redirect home.
     const onSubdomain = slugFromSubdomain();
+    const onAdmin = isAdminSubdomain();
+
+    if (onAdmin) {
+        return (
+            <Router>
+                <Navbar />
+                <Routes>
+                    <Route path="/login" element={<LoginForm />} />
+                    <Route path="/oauth/callback" element={<OAuthCallback />} />
+                    <Route
+                        path="*"
+                        element={<RequireAdmin><AdminOrdersPage /></RequireAdmin>}
+                    />
+                </Routes>
+            </Router>
+        );
+    }
 
     return (
       <Router>

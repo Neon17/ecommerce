@@ -61,7 +61,12 @@ def add_to_cart(request: HttpRequest):
         return Response({'error': 'Product not found'}, status=404)
 
     cart = get_or_create_cart(request)
-    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+    # `defaults={'quantity': 0}` so a brand-new item starts empty and the line
+    # below sets it to exactly `quantity` — without it the model default of 1
+    # would make the first "add" land 2 in the cart.
+    cart_item, created = CartItem.objects.get_or_create(
+        cart=cart, product=product, defaults={'quantity': 0},
+    )
     cart_item.quantity += int(quantity)
     if cart_item.quantity <= 0:
         cart_item.delete()

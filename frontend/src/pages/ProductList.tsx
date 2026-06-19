@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react';
 import type { Product } from '@/src/types/Product';
 import ProductCard from '@/src/components/ProductCard';
+import { BASEURL } from '@/src/lib/auth';
 
 function ProductList() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const BASE_URL = import.meta.env.VITE_DJANGO_BASE_URL || 'http://localhost:8000';
-
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch(`${BASE_URL}/api/products/`)
+    fetch(`${BASEURL}/api/products/`)
       .then(response => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json();
@@ -20,7 +19,7 @@ function ProductList() {
       .then(data => setProducts(data))
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
-  }, [BASE_URL]);
+  }, []);
 
   // Hero / header section
   const Header = () => (
@@ -99,9 +98,9 @@ function ProductList() {
         <Header />
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-          {products.map(product => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+            {products.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
         </div>
 
         {/* Optional: subtle footer */}

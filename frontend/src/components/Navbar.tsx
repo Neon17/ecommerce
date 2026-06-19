@@ -2,7 +2,7 @@ import { useState } from "react";
 import {Link, useNavigate} from "react-router-dom";
 import {useCart} from "../context/CartContext";
 import {useAuth} from "../context/AuthContext";
-import {slugFromSubdomain} from "../lib/shop";
+import {slugFromSubdomain, isAdminSubdomain} from "../lib/shop";
 import CartDrawer from "./CartDrawer";
 
 const Navbar = () => {
@@ -13,6 +13,8 @@ const Navbar = () => {
     const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
     // A shop subdomain is a manager-only surface: no customer cart or orders.
     const onSubdomain = slugFromSubdomain();
+    // The company admin subdomain shows only branding + logout.
+    const onAdmin = isAdminSubdomain();
 
     const handleLogout = () => {
         logout();
@@ -22,17 +24,21 @@ const Navbar = () => {
     return (
         <nav className="bg-white shadow-md p-4 flex justify-between items-center">
             <div className="text-xl font-bold">
-                <Link to="/">E-Commerce</Link>
+                <Link to="/">{onAdmin ? "Admin HQ" : "E-Commerce"}</Link>
             </div>
             <div className="space-x-4 flex items-center">
-                <Link to="/" className="text-gray-600 hover:text-gray-800">Home</Link>
+                {!onAdmin && (
+                    <Link to="/" className="text-gray-600 hover:text-gray-800">Home</Link>
+                )}
                 {user ? (
                     <>
-                        {!onSubdomain && (
+                        {!onSubdomain && !onAdmin && (
                             <Link to="/orders" className="text-gray-600 hover:text-gray-800">Orders</Link>
                         )}
-                        <Link to="/profile" className="text-gray-600 hover:text-gray-800">Profile</Link>
-                        {user.is_order_manager && (
+                        {!onAdmin && (
+                            <Link to="/profile" className="text-gray-600 hover:text-gray-800">Profile</Link>
+                        )}
+                        {!onAdmin && user.is_order_manager && (
                             <Link
                                 to="/admin"
                                 className="text-indigo-600 font-medium hover:text-indigo-800"
@@ -40,7 +46,7 @@ const Navbar = () => {
                                 Admin
                             </Link>
                         )}
-                        {user.is_shop_manager && (
+                        {!onAdmin && user.is_shop_manager && (
                             <Link
                                 to="/shop"
                                 className="text-indigo-600 font-medium hover:text-indigo-800"
@@ -55,7 +61,7 @@ const Navbar = () => {
                 ) : (
                     <Link to="/login" className="text-gray-600 hover:text-gray-800">Login</Link>
                 )}
-                {!onSubdomain && !user?.is_shop_manager &&
+                {!onSubdomain && !onAdmin && !user?.is_shop_manager &&
                     <button
                         onClick={() => setCartOpen(true)}
                         aria-label="Open cart"
