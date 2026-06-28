@@ -16,6 +16,19 @@ from dotenv import load_dotenv
 load_dotenv()
 from datetime import timedelta
 
+EMAIL_BACKEND=os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST=os.getenv('EMAIL_HOST')
+EMAIL_PORT=os.getenv('EMAIL_PORT')
+EMAIL_HOST_USER=os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD=os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL=os.getenv('DEFAULT_FROM_EMAIL')
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
 ESEWA_PRODUCT_CODE = os.getenv('ESEWA_PRODUCT_CODE')
 ESEWA_SECRET_KEY = os.getenv('ESEWA_SECRET_KEY')
 ESEWA_SIGNED_FIELD_NAME = os.getenv('ESEWA_SIGNED_FIELD_NAMES')

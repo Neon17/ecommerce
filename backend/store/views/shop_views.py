@@ -12,6 +12,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 
 from ..models import Cart, Order, SubOrder, OrderItem, Product
 from ..permissions import IsShopManager
+from ..tasks import send_order_confirmation_task
 from ..serializers import (
     ManageProductSerializer,
     SubOrderSerializer,
@@ -162,6 +163,8 @@ class CheckoutView(APIView):
         OrderItem.objects.bulk_create(order_items)
 
         cart.items.all().delete()
+
+        transaction.on_commit(lambda: send_order_confirmation_task.delay(order.id))
 
         return Response(
             {

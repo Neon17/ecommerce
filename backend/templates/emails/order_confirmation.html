@@ -1,0 +1,15 @@
+<h2>Thanks for your order, {{ order.name }}!</h2>
+<p>Order #{{ order.id }} &mdash; {{ order.get_status_display }}</p>
+<p>Payment method: {{ order.get_payment_method_display }}</p>
+<table cellpadding="6">
+  <tr><th align="left">Item</th><th align="left">Qty</th><th align="left">Price</th></tr>
+  {% for item in order.items.all %}
+  <tr>
+    <td>{{ item.product.name }}</td>
+    <td>{{ item.quantity }}</td>
+    <td>{{ item.price }}</td>
+  </tr>
+  {% endfor %}
+</table>
+<p><strong>Total: {{ order.total_price }}</strong></p>
+<p>Shipping to: {{ order.address }}</p>

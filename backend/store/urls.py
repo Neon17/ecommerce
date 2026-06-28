@@ -12,6 +12,9 @@ from .views import google_auth_views
 
 urlpatterns = [
     path('register', auth_views.register_view, name='register'),
+    path('verify-email/<uidb64>/<token>/', auth_views.verify_email, name='verify_email'),
+    path('password-reset', auth_views.password_reset_request, name='password_reset'),
+    path('password-reset/<uidb64>/<token>/', auth_views.password_reset_confirm, name='password_reset_confirm'),
     path('login', auth_views.login_view, name='login'),
     path('logout', auth_views.logout_view, name='logout'),
     path('refresh', auth_views.refresh_view, name='refresh'),
